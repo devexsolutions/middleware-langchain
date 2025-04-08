@@ -2,7 +2,7 @@ gunicorn
 fastapi
 uvicorn
 openai
-langchain==0.1.14
-langchain-community==0.0.21
+langchain
+langchain-community
 requests
 python-dotenv
