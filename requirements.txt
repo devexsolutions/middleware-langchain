@@ -1,8 +1,6 @@
-gunicorn
 fastapi
 uvicorn
-openai
-langchain
-langchain-community
 requests
 python-dotenv
+langchain
+langchain-openai
