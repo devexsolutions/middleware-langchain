@@ -16,7 +16,7 @@ app = FastAPI()
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Cambia esto a ["https://joseantoniocampos.pro"] para mayor seguridad
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -84,10 +84,19 @@ async def interpretar_prompt(request: PromptRequest):
     elif result.get("accion") == "facturas_pendientes":
         params = {"limit": 100, "sqlfilters": "(fk_statut:=:1)"}
         response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
+        facturas = response.json()
+
+        for factura in facturas:
+            socid = factura.get("socid")
+            if socid:
+                cliente_resp = requests.get(f"{DOLIBARR_API_URL}/thirdparties/{socid}", headers=headers)
+                if cliente_resp.status_code == 200:
+                    cliente_data = cliente_resp.json()
+                    factura["client_name"] = cliente_data.get("name")
+
         return {
             "status_code": response.status_code,
-            "respuesta": response.text,
-            "json": response.json() if response.headers.get("Content-Type", "").startswith("application/json") else None
+            "json": facturas
         }
 
     elif result.get("accion") == "facturas_pendientes_usuario":
@@ -99,10 +108,14 @@ async def interpretar_prompt(request: PromptRequest):
         if tercero:
             params = {"limit": 100, "sqlfilters": f"(fk_soc:=:{tercero['id']} AND fk_statut:=:1)"}
             response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
+            facturas = response.json()
+
+            for factura in facturas:
+                factura["client_name"] = tercero.get("name")
+
             return {
                 "status_code": response.status_code,
-                "respuesta": response.text,
-                "json": response.json() if response.headers.get("Content-Type", "").startswith("application/json") else None
+                "json": facturas
             }
         else:
             return {"mensaje": f"No se encontró el cliente '{usuario_nombre}'"}
