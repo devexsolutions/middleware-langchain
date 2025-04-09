@@ -25,12 +25,14 @@ async def root():
 prompt_template = PromptTemplate(
     input_variables=["user_prompt"],
     template="""
-Eres un asistente que interpreta preguntas sobre obras. Si te preguntan:
+Eres un asistente que interpreta preguntas sobre obras y facturación. Si te preguntan:
 
 "{user_prompt}"
 
-Responde SOLO con una acción JSON. Ejemplo:
-{{"accion": "listar_obras"}}
+Responde SOLO con una acción JSON. Ejemplos:
+{"accion": "listar_obras"}
+{"accion": "facturas_pendientes"}
+{"accion": "facturas_pendientes_usuario", "usuario": "Juan Perez"}
     """
 )
 
@@ -45,13 +47,32 @@ async def interpretar_prompt(request: PromptRequest):
     except Exception as e:
         return {"error": str(e), "respuesta": respuesta.content}
 
+    headers = {
+        "DOLAPIKEY": DOLIBARR_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
     if result.get("accion") == "listar_obras":
-        headers = {
-            "DOLAPIKEY": DOLIBARR_API_KEY,
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
         response = requests.get(f"{DOLIBARR_API_URL}/obras", headers=headers)
         return response.json()
+
+    elif result.get("accion") == "facturas_pendientes":
+        params = {"limit": 100, "sqlfilters": "fk_statut=1"}  # 1 = borrador, 2 = validado, 1 es pendiente
+        response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
+        return response.json()
+
+    elif result.get("accion") == "facturas_pendientes_usuario":
+        usuario_nombre = result.get("usuario")
+        thirdparty_response = requests.get(f"{DOLIBARR_API_URL}/thirdparties", headers=headers)
+        thirdparties = thirdparty_response.json()
+        tercero = next((tp for tp in thirdparties if usuario_nombre.lower() in tp.get("name", "").lower()), None)
+
+        if tercero:
+            params = {"limit": 100, "sqlfilters": f"fk_soc={tercero['id']} AND fk_statut=1"}
+            response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
+            return response.json()
+        else:
+            return {"mensaje": f"No se encontró el cliente '{usuario_nombre}'"}
 
     return {"mensaje": "Acción aún no implementada", "accion": result.get("accion")}
