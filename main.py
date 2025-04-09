@@ -7,6 +7,7 @@ from langchain.prompts import PromptTemplate
 from langchain_core.runnables import RunnableSequence
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+from ast import literal_eval
 
 load_dotenv()
 
@@ -58,10 +59,14 @@ async def interpretar_prompt(request: PromptRequest):
     except Exception as e:
         return {"error": f"Error al invocar LLM: {str(e)}"}
 
+    cleaned = respuesta.content.strip()
+    if cleaned.startswith("{{") and cleaned.endswith("}}"):  # elimina capa externa de llaves
+        cleaned = cleaned[1:-1]
+
     try:
-        result = eval(respuesta.content)  # cuidado con eval en producción
+        result = literal_eval(cleaned)
     except Exception as e:
-        return {"error": f"Error al interpretar la respuesta del LLM: {str(e)}", "respuesta": respuesta.content}
+        return {"error": f"Error al interpretar la respuesta del LLM: {str(e)}", "respuesta": cleaned}
 
     if not DOLIBARR_API_URL or not DOLIBARR_API_KEY:
         return {"error": "Faltan variables de entorno para DOLIBARR_API_URL o DOLIBARR_API_KEY"}
