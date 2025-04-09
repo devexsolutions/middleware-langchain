@@ -82,7 +82,7 @@ async def interpretar_prompt(request: PromptRequest):
         return response.json()
 
     elif result.get("accion") == "facturas_pendientes":
-        params = {"limit": 100, "sqlfilters": "fk_statut=1"}
+        params = {"limit": 100, "sqlfilters": "(fk_statut:=:1)"}
         response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
         return {
             "status_code": response.status_code,
@@ -97,7 +97,7 @@ async def interpretar_prompt(request: PromptRequest):
         tercero = next((tp for tp in thirdparties if usuario_nombre.lower() in tp.get("name", "").lower()), None)
 
         if tercero:
-            params = {"limit": 100, "sqlfilters": f"fk_soc={tercero['id']} AND fk_statut=1"}
+            params = {"limit": 100, "sqlfilters": f"(fk_soc:=:{tercero['id']} AND fk_statut:=:1)"}
             response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
             return {
                 "status_code": response.status_code,
