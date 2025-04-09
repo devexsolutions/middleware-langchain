@@ -25,6 +25,10 @@ DOLIBARR_API_URL = os.getenv("DOLIBARR_API_URL")
 DOLIBARR_API_KEY = os.getenv("DOLIBARR_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+if not DOLIBARR_API_URL or not DOLIBARR_API_KEY:
+    return {"error": "Faltan variables de entorno para DOLIBARR_API_URL o DOLIBARR_API_KEY"}
+
+
 class PromptRequest(BaseModel):
     prompt: str
 
@@ -53,9 +57,15 @@ chain: RunnableSequence = prompt_template | llm
 async def interpretar_prompt(request: PromptRequest):
     respuesta = chain.invoke({"user_prompt": request.prompt})
     try:
-        result = eval(respuesta.content)  # cuidado con eval en producción
+        respuesta = chain.invoke({"user_prompt": request.prompt})
     except Exception as e:
-        return {"error": str(e), "respuesta": respuesta.content}
+        return {"error": f"Error al invocar LLM: {str(e)}"}
+    
+    try:
+        result = eval(respuesta.content)
+    except Exception as e:
+        return {"error": f"Error al interpretar la respuesta del LLM: {str(e)}", "respuesta": respuesta.content}
+
 
     headers = {
         "Authorization": f"Bearer {DOLIBARR_API_KEY}",
