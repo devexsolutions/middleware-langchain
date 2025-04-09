@@ -39,11 +39,13 @@ Eres un asistente que interpreta preguntas sobre obras y facturación. Si te pre
 
 "{user_prompt}"
 
-Responde SOLO con una acción JSON. Ejemplos:
-{{"accion": "listar_obras"}}
-{{"accion": "facturas_pendientes"}}
-{{"accion": "facturas_pendientes_usuario", "usuario": "Juan Perez"}}
-    """
+Responde SOLO con una acción JSON. Por ejemplo:
+
+{{{{"accion": "listar_obras"}}}},
+{{{{"accion": "facturas_pendientes"}}}},
+o
+{{{{"accion": "facturas_pendientes_usuario", "usuario": "Juan Perez"}}}}.
+"""
 )
 
 llm = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
