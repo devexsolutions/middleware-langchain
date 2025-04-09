@@ -48,7 +48,7 @@ async def interpretar_prompt(request: PromptRequest):
         return {"error": str(e), "respuesta": respuesta.content}
 
     headers = {
-        "DOLAPIKEY": DOLIBARR_API_KEY,
+        "Authorization": f"Bearer {DOLIBARR_API_KEY}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
@@ -58,9 +58,13 @@ async def interpretar_prompt(request: PromptRequest):
         return response.json()
 
     elif result.get("accion") == "facturas_pendientes":
-        params = {"limit": 100, "sqlfilters": "fk_statut=1"}  # 1 = borrador, 2 = validado, 1 es pendiente
+        params = {"limit": 100, "sqlfilters": "fk_statut=1"}
         response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
-        return response.json()
+        return {
+            "status_code": response.status_code,
+            "respuesta": response.text,
+            "json": response.json() if response.headers.get("Content-Type", "").startswith("application/json") else None
+        }
 
     elif result.get("accion") == "facturas_pendientes_usuario":
         usuario_nombre = result.get("usuario")
@@ -71,7 +75,11 @@ async def interpretar_prompt(request: PromptRequest):
         if tercero:
             params = {"limit": 100, "sqlfilters": f"fk_soc={tercero['id']} AND fk_statut=1"}
             response = requests.get(f"{DOLIBARR_API_URL}/invoices", headers=headers, params=params)
-            return response.json()
+            return {
+                "status_code": response.status_code,
+                "respuesta": response.text,
+                "json": response.json() if response.headers.get("Content-Type", "").startswith("application/json") else None
+            }
         else:
             return {"mensaje": f"No se encontró el cliente '{usuario_nombre}'"}
 
