@@ -25,10 +25,6 @@ DOLIBARR_API_URL = os.getenv("DOLIBARR_API_URL")
 DOLIBARR_API_KEY = os.getenv("DOLIBARR_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if not DOLIBARR_API_URL or not DOLIBARR_API_KEY:
-    return {"error": "Faltan variables de entorno para DOLIBARR_API_URL o DOLIBARR_API_KEY"}
-
-
 class PromptRequest(BaseModel):
     prompt: str
 
@@ -47,7 +43,7 @@ Responde SOLO con una acción JSON. Ejemplos:
 {{"accion": "listar_obras"}}
 {{"accion": "facturas_pendientes"}}
 {{"accion": "facturas_pendientes_usuario", "usuario": "Juan Perez"}}
-"""
+    """
 )
 
 llm = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
@@ -55,17 +51,18 @@ chain: RunnableSequence = prompt_template | llm
 
 @app.post("/prompt")
 async def interpretar_prompt(request: PromptRequest):
-    respuesta = chain.invoke({"user_prompt": request.prompt})
     try:
         respuesta = chain.invoke({"user_prompt": request.prompt})
     except Exception as e:
         return {"error": f"Error al invocar LLM: {str(e)}"}
-    
+
     try:
-        result = eval(respuesta.content)
+        result = eval(respuesta.content)  # cuidado con eval en producción
     except Exception as e:
         return {"error": f"Error al interpretar la respuesta del LLM: {str(e)}", "respuesta": respuesta.content}
 
+    if not DOLIBARR_API_URL or not DOLIBARR_API_KEY:
+        return {"error": "Faltan variables de entorno para DOLIBARR_API_URL o DOLIBARR_API_KEY"}
 
     headers = {
         "Authorization": f"Bearer {DOLIBARR_API_KEY}",
