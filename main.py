@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
 import os
@@ -10,6 +11,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Cambia esto a ["https://joseantoniocampos.pro"] para mayor seguridad
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 DOLIBARR_API_URL = os.getenv("DOLIBARR_API_URL")
 DOLIBARR_API_KEY = os.getenv("DOLIBARR_API_KEY")
