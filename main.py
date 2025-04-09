@@ -72,7 +72,7 @@ async def interpretar_prompt(request: PromptRequest):
         return {"error": "Faltan variables de entorno para DOLIBARR_API_URL o DOLIBARR_API_KEY"}
 
     headers = {
-        "X-Dolibarr-Api-Key": DOLIBARR_API_KEY,
+        "DOLAPIKEY": DOLIBARR_API_KEY,
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
