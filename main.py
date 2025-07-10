@@ -8,21 +8,21 @@ from langchain_core.runnables import RunnableSequence
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from ast import literal_eval
-from flask_cors import CORS
+
 
 load_dotenv()
 
 app = FastAPI()
 
 # Configurar CORS
-#app.add_middleware(
-#    CORSMiddleware,
-#    allow_origins=["https://joseantoniocampos.pro"],  # Aquí tu frontend real
-#    allow_credentials=True,
-#    allow_methods=["*"],
-#    allow_headers=["*"]
-#)
-CORS(app, origins=["https://joseantoniocampos.pro"], supports_credentials=True)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://joseantoniocampos.pro"],  # Aquí tu frontend real
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
 
 DOLIBARR_API_URL = os.getenv("DOLIBARR_API_URL")
 DOLIBARR_API_KEY = os.getenv("DOLIBARR_API_KEY")
